@@ -6,7 +6,7 @@ A simple yet interactive **Sticky Notes Web Application** that allows users to c
 
 ### 🔗 Live Demo
 
-👉 [Click here to try it now](https://ganeshchavan8491.github.io/sticky-notes)
+👉 [Click here to try it now](https://github.com/ganuchavan8491/Sticky-Notes.git)
 
 ---
 

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sticky Notes</title>
+  <link rel="stylesheet" href="./assetes/css/style.css">
+</head>
+<body>
+
+  <h1 id="heading">🗒️ Sticky Notes</h1>
+
+  <div id="board"></div>
+
+  <!-- Floating Add Button -->
+  <button id="addBtn">+</button>
+
+  <!-- Popup Form -->
+  <div id="overlay"></div>
+  <div id="popup">
+    <h3>Create a Note</h3>
+    <textarea id="noteText" placeholder="Your note..."></textarea>
+    <br>
+    <input type="color" id="noteColor" value="#ffeb3b">
+    <button onclick="saveNote()">Save</button>
+  </div>
+
+  <script src="./assetes/js/script.js"></script>
+</body>
+</html>

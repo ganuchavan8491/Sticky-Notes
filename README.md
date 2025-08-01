@@ -8,8 +8,6 @@ A simple yet interactive **Sticky Notes Web Application** that allows users to c
 
 👉 [Click here to try it now](https://ganeshchavan8491.github.io/sticky-notes)
 
-> *(Make sure to deploy your project on GitHub Pages for the above link to work)*
-
 ---
 
 ## ✨ Features

@@ -4,8 +4,10 @@ const overlay = document.getElementById('overlay');
 const popup = document.getElementById('popup');
 const textInput = document.getElementById('noteText');
 const colorInput = document.getElementById('noteColor');
+const heading = document.getElementById('heading'); // Make sure your <h2> has id="heading"
 
 let notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
+let noteOffset = 0; // to avoid overlapping
 
 function saveNotes() {
   localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -31,10 +33,10 @@ function renderNotes() {
       <div class="time">${note.time}</div>
     `;
 
-    // DRAG HANDLER
     let isDragging = false;
     let startX, startY, initialX, initialY;
 
+    // Desktop drag
     div.addEventListener("mousedown", function (e) {
       isDragging = true;
       startX = e.clientX;
@@ -42,14 +44,12 @@ function renderNotes() {
       initialX = parseInt(div.style.left) || 0;
       initialY = parseInt(div.style.top) || 0;
 
-      div.style.zIndex = 9999; // Bring this note to front
+      div.style.zIndex = 9999;
 
       function onMouseMove(e) {
         if (!isDragging) return;
-
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-
         div.style.left = initialX + dx + "px";
         div.style.top = initialY + dy + "px";
       }
@@ -58,41 +58,53 @@ function renderNotes() {
         isDragging = false;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
-
-        div.style.zIndex = 1; // Reset z-index
-
-        // Save final position
+        div.style.zIndex = 1;
         notes[i].x = div.style.left;
         notes[i].y = div.style.top;
         saveNotes();
       }
 
       document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp, { once: true });
+      document.addEventListener("mouseup", onMouseUp);
+    });
+
+    // Mobile drag
+    div.addEventListener("touchstart", function (e) {
+      isDragging = true;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      initialX = parseInt(div.style.left) || 0;
+      initialY = parseInt(div.style.top) || 0;
+
+      div.style.zIndex = 9999;
+
+      function onTouchMove(e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        div.style.left = initialX + dx + "px";
+        div.style.top = initialY + dy + "px";
+      }
+
+      function onTouchEnd() {
+        isDragging = false;
+        document.removeEventListener("touchmove", onTouchMove);
+        document.removeEventListener("touchend", onTouchEnd);
+        div.style.zIndex = 1;
+        notes[i].x = div.style.left;
+        notes[i].y = div.style.top;
+        saveNotes();
+      }
+
+      document.addEventListener("touchmove", onTouchMove);
+      document.addEventListener("touchend", onTouchEnd);
     });
 
     board.appendChild(div);
   });
 }
-
-
-
-// Make board a drop target
-board.addEventListener('dragover', (e) => {
-  e.preventDefault();
-});
-
-board.addEventListener('drop', (e) => {
-  const index = e.dataTransfer.getData("text/plain");
-  const x = e.clientX;
-  const y = e.clientY;
-
-  // Update note position
-  notes[index].x = `${x - 100}px`;  // center offset
-  notes[index].y = `${y - 50}px`;
-  saveNotes();
-  renderNotes();
-});
 
 function showPopup() {
   popup.style.display = 'block';
@@ -114,9 +126,11 @@ function saveNote() {
     text,
     color,
     time: new Date().toLocaleString(),
-    x: '10px',
-    y: '10px'
+    x: `${10 + (noteOffset % 200)}px`,
+    y: `${10 + (noteOffset % 300)}px`
   };
+
+  noteOffset += 40;
 
   notes.push(note);
   saveNotes();
@@ -144,15 +158,12 @@ addBtn.addEventListener('click', showPopup);
 overlay.addEventListener('click', hidePopup);
 renderNotes();
 
-// Color cycle animation for the + button
-let Btn = document.getElementById("addBtn");
-let head = document.getElementById("heading"); // You must add id="heading" in your <h2>
-
+// Button and heading color animation
 const colors = ["#dff800ff", "#f321e5ff", "#31067aff", "#ff0471ff", "#98ffe2ff"];
 let j = 0;
 
 setInterval(() => {
-  if (addBtn) Btn.style.backgroundColor = colors[j];
-  if (heading) head.style.color = colors[j];
+  if (addBtn) addBtn.style.backgroundColor = colors[j];
+  if (heading) heading.style.color = colors[j];
   j = (j + 1) % colors.length;
 }, 1000);

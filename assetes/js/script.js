@@ -162,8 +162,11 @@ function editNote(index) {
 }
 
 function markComplete(index) {
-  notes[index].complete = !notes[index].complete;
-  notes[index].time = new Date().toLocaleString();
+  if (checkbox.checked) {
+        alert("Marked as done!");
+      } else {
+        alert("Unchecked");
+      }
   saveNotes();
   renderNotes();
 }

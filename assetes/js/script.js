@@ -1,174 +1,223 @@
-const board = document.getElementById('board');
-const addBtn = document.getElementById('addBtn');
-const overlay = document.getElementById('overlay');
-const popup = document.getElementById('popup');
-const textInput = document.getElementById('noteText');
-const colorInput = document.getElementById('noteColor');
-const heading = document.getElementById('heading');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sticky Notes Todo</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
 
-let notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
-let noteOffset = 0;
-let zCounter = 10;
+    #board {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-function saveNotes() {
-  localStorage.setItem('stickyNotes', JSON.stringify(notes));
-}
+    .note {
+      position: absolute;
+      width: 200px;
+      min-height: 150px;
+      background-color: #fffec8;
+      border: 1px solid #ccc;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      box-sizing: border-box;
+      border-radius: 10px;
+    }
 
-function renderNotes() {
-  board.innerHTML = '';
-  notes.forEach((note, i) => {
-    const div = document.createElement('div');
-    div.className = 'note';
-    div.style.background = note.color;
-    div.style.left = note.x || '20px';
-    div.style.top = note.y || '20px';
-    div.style.position = 'absolute';
-    div.style.zIndex = note.z || 1;
+    .note input[type="text"] {
+      width: 100%;
+      font-size: 16px;
+      padding: 5px;
+      border: none;
+      background: transparent;
+      outline: none;
+    }
 
-    div.innerHTML = `
-      <div class="actions">
-        <button onclick="editNote(${i})">✏️</button>
-        <button onclick="deleteNote(${i})">🗑</button>
-      </div>
-      <div class="note-text" style="${note.complete ? 'text-decoration: line-through;' : ''}">${note.text}</div>
-      <div class="time">${note.time}</div>
-    `;
+    .note-buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
 
-    let isDragging = false;
-    let startX, startY, initialX, initialY;
+    .note-buttons button {
+      font-size: 14px;
+      padding: 2px 6px;
+      cursor: pointer;
+    }
 
-    const bringToTop = () => {
-      zCounter++;
-      div.style.zIndex = zCounter;
-      notes[i].z = zCounter;
+    .completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    #addBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 10px 15px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="addBtn">+ Add Note</button>
+  <div id="board"></div>
+
+  <script>
+    const board = document.getElementById("board");
+    const addBtn = document.getElementById("addBtn");
+    let notes = JSON.parse(localStorage.getItem("stickyNotes")) || [];
+    let highestZIndex = 1;
+
+    function saveNotes() {
+      localStorage.setItem("stickyNotes", JSON.stringify(notes));
+    }
+
+    function renderNotes() {
+      board.innerHTML = "";
+      notes.forEach((note, i) => {
+        const div = document.createElement("div");
+        div.className = "note";
+        div.style.left = note.left || "50px";
+        div.style.top = note.top || "50px";
+        div.style.backgroundColor = note.color || "#fffec8";
+        div.style.zIndex = note.zIndex || 1;
+
+        if (note.zIndex && note.zIndex > highestZIndex) {
+          highestZIndex = note.zIndex;
+        }
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = note.text || "";
+        if (note.completed) input.classList.add("completed");
+
+        input.addEventListener("input", () => {
+          notes[i].text = input.value;
+          saveNotes();
+        });
+
+        const btnBox = document.createElement("div");
+        btnBox.className = "note-buttons";
+
+        const editBtn = document.createElement("button");
+        editBtn.innerText = "✏";
+        editBtn.addEventListener("click", () => {
+          input.disabled = !input.disabled;
+          input.focus();
+        });
+
+        const completeBtn = document.createElement("button");
+        completeBtn.innerText = "✓";
+        completeBtn.addEventListener("click", () => {
+          notes[i].completed = !notes[i].completed;
+          input.classList.toggle("completed");
+          saveNotes();
+        });
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "🗑";
+        deleteBtn.addEventListener("click", () => {
+          notes.splice(i, 1);
+          saveNotes();
+          renderNotes();
+        });
+
+        btnBox.append(editBtn, completeBtn, deleteBtn);
+        div.append(input, btnBox);
+        board.appendChild(div);
+
+        // Drag support
+        let isDragging = false, startX, startY, initialX, initialY;
+
+        div.addEventListener("mousedown", (e) => {
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          initialX = parseInt(div.style.left) || 0;
+          initialY = parseInt(div.style.top) || 0;
+
+          highestZIndex += 1;
+          div.style.zIndex = highestZIndex;
+          notes[i].zIndex = highestZIndex;
+          saveNotes();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          div.style.left = initialX + dx + "px";
+          div.style.top = initialY + dy + "px";
+          notes[i].left = div.style.left;
+          notes[i].top = div.style.top;
+        });
+
+        document.addEventListener("mouseup", () => {
+          if (isDragging) {
+            isDragging = false;
+            saveNotes();
+          }
+        });
+
+        // Touch for mobile
+        div.addEventListener("touchstart", (e) => {
+          isDragging = true;
+          const touch = e.touches[0];
+          startX = touch.clientX;
+          startY = touch.clientY;
+          initialX = parseInt(div.style.left) || 0;
+          initialY = parseInt(div.style.top) || 0;
+
+          highestZIndex += 1;
+          div.style.zIndex = highestZIndex;
+          notes[i].zIndex = highestZIndex;
+          saveNotes();
+        });
+
+        document.addEventListener("touchmove", (e) => {
+          if (!isDragging) return;
+          const touch = e.touches[0];
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
+          div.style.left = initialX + dx + "px";
+          div.style.top = initialY + dy + "px";
+          notes[i].left = div.style.left;
+          notes[i].top = div.style.top;
+        });
+
+        document.addEventListener("touchend", () => {
+          if (isDragging) {
+            isDragging = false;
+            saveNotes();
+          }
+        });
+      });
+    }
+
+    addBtn.addEventListener("click", () => {
+      notes.push({
+        text: "",
+        left: "60px",
+        top: "60px",
+        color: "#fffec8",
+        zIndex: ++highestZIndex,
+        completed: false
+      });
       saveNotes();
-    };
-
-    div.addEventListener("mousedown", function (e) {
-      isDragging = true;
-      bringToTop();
-      startX = e.clientX;
-      startY = e.clientY;
-      initialX = parseInt(div.style.left) || 0;
-      initialY = parseInt(div.style.top) || 0;
-
-      function onMouseMove(e) {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        div.style.left = initialX + dx + "px";
-        div.style.top = initialY + dy + "px";
-      }
-
-      function onMouseUp() {
-        isDragging = false;
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        notes[i].x = div.style.left;
-        notes[i].y = div.style.top;
-        saveNotes();
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      renderNotes();
     });
 
-    div.addEventListener("touchstart", function (e) {
-      isDragging = true;
-      bringToTop();
-      const touch = e.touches[0];
-      startX = touch.clientX;
-      startY = touch.clientY;
-      initialX = parseInt(div.style.left) || 0;
-      initialY = parseInt(div.style.top) || 0;
-
-      function onTouchMove(e) {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        div.style.left = initialX + dx + "px";
-        div.style.top = initialY + dy + "px";
-      }
-
-      function onTouchEnd() {
-        isDragging = false;
-        document.removeEventListener("touchmove", onTouchMove);
-        document.removeEventListener("touchend", onTouchEnd);
-        notes[i].x = div.style.left;
-        notes[i].y = div.style.top;
-        saveNotes();
-      }
-
-      document.addEventListener("touchmove", onTouchMove);
-      document.addEventListener("touchend", onTouchEnd);
-    });
-
-    div.addEventListener('click', bringToTop);
-
-    board.appendChild(div);
-  });
-}
-
-function showPopup() {
-  popup.style.display = 'block';
-  overlay.style.display = 'block';
-  textInput.value = '';
-}
-
-function hidePopup() {
-  popup.style.display = 'none';
-  overlay.style.display = 'none';
-}
-
-function saveNote() {
-  const text = textInput.value.trim();
-  const color = colorInput.value;
-  if (!text) return;
-
-  const note = {
-    text,
-    color,
-    complete: false,
-    time: new Date().toLocaleString(),
-    x: `${10 + (noteOffset % 200)}px`,
-    y: `${10 + (noteOffset % 300)}px`,
-    z: ++zCounter
-  };
-
-  noteOffset += 40;
-
-  notes.push(note);
-  saveNotes();
-  renderNotes();
-  hidePopup();
-}
-
-function deleteNote(index) {
-  notes.splice(index, 1);
-  saveNotes();
-  renderNotes();
-}
-
-function editNote(index) {
-  const newText = prompt("Edit your note:", notes[index].text);
-  if (newText !== null) {
-    notes[index].text = newText.trim();
-    notes[index].time = new Date().toLocaleString();
-    saveNotes();
     renderNotes();
-  }
-}
-
-addBtn.addEventListener('click', showPopup);
-overlay.addEventListener('click', hidePopup);
-renderNotes();
-
-// Color animation
-const colors = ["#dff800ff", "#f321e5ff", "#31067aff", "#ff0471ff", "#98ffe2ff"];
-let j = 0;
-setInterval(() => {
-  if (addBtn) addBtn.style.backgroundColor = colors[j];
-  if (heading) heading.style.color = colors[j];
-  j = (j + 1) % colors.length;
-}, 1000);
+  </script>
+</body>
+</html>

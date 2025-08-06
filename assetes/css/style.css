@@ -48,17 +48,6 @@ h2 {
   transition: box-shadow 0.3s;
 }
 
-.note input[type="checkbox"] {
-  position: absolute;
-  top: 6px;    /* distance from top edge */
-  left: 6px;   /* distance from left edge */
-  z-index: 2;
-  width: 16px;
-  height: 16px;
-  accent-color: green;
-  cursor: pointer;
-}
-
 .note:active {
   box-shadow: 0 8px 20px #0005;
 }
@@ -203,4 +192,5 @@ h2 {
     font-size: 14px;
   }
 }
+
 

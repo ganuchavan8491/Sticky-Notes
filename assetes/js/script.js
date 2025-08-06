@@ -8,7 +8,7 @@ const heading = document.getElementById('heading');
 
 let notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
 let noteOffset = 0;
-let highestZIndex = 1;
+let zCounter = 10;
 
 function saveNotes() {
   localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -23,36 +23,35 @@ function renderNotes() {
     div.style.left = note.x || '20px';
     div.style.top = note.y || '20px';
     div.style.position = 'absolute';
-    div.style.zIndex = note.zIndex || 1;
-
-    if (note.zIndex && note.zIndex > highestZIndex) {
-      highestZIndex = note.zIndex;
-    }
+    div.style.zIndex = note.z || 1;
 
     div.innerHTML = `
       <div class="actions">
+        <button onclick="markComplete(${i})">✅</button>
         <button onclick="editNote(${i})">✏️</button>
         <button onclick="deleteNote(${i})">🗑</button>
-        <button onclick="completeNote(${i})">✅</button>
       </div>
-      <div class="note-text" style="text-decoration: ${note.completed ? 'line-through' : 'none'};">${note.text}</div>
+      <div class="note-text" style="${note.complete ? 'text-decoration: line-through;' : ''}">${note.text}</div>
       <div class="time">${note.time}</div>
     `;
 
     let isDragging = false;
     let startX, startY, initialX, initialY;
 
+    const bringToTop = () => {
+      zCounter++;
+      div.style.zIndex = zCounter;
+      notes[i].z = zCounter;
+      saveNotes();
+    };
+
     div.addEventListener("mousedown", function (e) {
       isDragging = true;
+      bringToTop();
       startX = e.clientX;
       startY = e.clientY;
       initialX = parseInt(div.style.left) || 0;
       initialY = parseInt(div.style.top) || 0;
-
-      highestZIndex += 1;
-      div.style.zIndex = highestZIndex;
-      notes[i].zIndex = highestZIndex;
-      saveNotes();
 
       function onMouseMove(e) {
         if (!isDragging) return;
@@ -77,16 +76,12 @@ function renderNotes() {
 
     div.addEventListener("touchstart", function (e) {
       isDragging = true;
+      bringToTop();
       const touch = e.touches[0];
       startX = touch.clientX;
       startY = touch.clientY;
       initialX = parseInt(div.style.left) || 0;
       initialY = parseInt(div.style.top) || 0;
-
-      highestZIndex += 1;
-      div.style.zIndex = highestZIndex;
-      notes[i].zIndex = highestZIndex;
-      saveNotes();
 
       function onTouchMove(e) {
         if (!isDragging) return;
@@ -109,6 +104,9 @@ function renderNotes() {
       document.addEventListener("touchmove", onTouchMove);
       document.addEventListener("touchend", onTouchEnd);
     });
+
+    // When clicked/tapped — bring on top
+    div.addEventListener('click', bringToTop);
 
     board.appendChild(div);
   });
@@ -133,14 +131,15 @@ function saveNote() {
   const note = {
     text,
     color,
-    completed: false,
+    complete: false,
     time: new Date().toLocaleString(),
     x: `${10 + (noteOffset % 200)}px`,
     y: `${10 + (noteOffset % 300)}px`,
-    zIndex: ++highestZIndex
+    z: ++zCounter
   };
 
   noteOffset += 40;
+
   notes.push(note);
   saveNotes();
   renderNotes();
@@ -163,8 +162,9 @@ function editNote(index) {
   }
 }
 
-function completeNote(index) {
-  notes[index].completed = !notes[index].completed;
+function markComplete(index) {
+  notes[index].complete = !notes[index].complete;
+  notes[index].time = new Date().toLocaleString();
   saveNotes();
   renderNotes();
 }
@@ -173,9 +173,9 @@ addBtn.addEventListener('click', showPopup);
 overlay.addEventListener('click', hidePopup);
 renderNotes();
 
+// Color animation
 const colors = ["#dff800ff", "#f321e5ff", "#31067aff", "#ff0471ff", "#98ffe2ff"];
 let j = 0;
-
 setInterval(() => {
   if (addBtn) addBtn.style.backgroundColor = colors[j];
   if (heading) heading.style.color = colors[j];

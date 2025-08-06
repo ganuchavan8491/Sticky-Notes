@@ -4,10 +4,11 @@ const overlay = document.getElementById('overlay');
 const popup = document.getElementById('popup');
 const textInput = document.getElementById('noteText');
 const colorInput = document.getElementById('noteColor');
-const heading = document.getElementById('heading'); // Make sure your <h2> has id="heading"
+const heading = document.getElementById('heading');
 
 let notes = JSON.parse(localStorage.getItem('stickyNotes')) || [];
-let noteOffset = 0; // to avoid overlapping
+let noteOffset = 0;
+let highestZIndex = 1;
 
 function saveNotes() {
   localStorage.setItem('stickyNotes', JSON.stringify(notes));
@@ -22,21 +23,25 @@ function renderNotes() {
     div.style.left = note.x || '20px';
     div.style.top = note.y || '20px';
     div.style.position = 'absolute';
-    div.style.zIndex = 1;
+    div.style.zIndex = note.zIndex || 1;
+
+    if (note.zIndex && note.zIndex > highestZIndex) {
+      highestZIndex = note.zIndex;
+    }
 
     div.innerHTML = `
       <div class="actions">
         <button onclick="editNote(${i})">✏️</button>
         <button onclick="deleteNote(${i})">🗑</button>
+        <button onclick="completeNote(${i})">✅</button>
       </div>
-      ${note.text}
+      <div class="note-text" style="text-decoration: ${note.completed ? 'line-through' : 'none'};">${note.text}</div>
       <div class="time">${note.time}</div>
     `;
 
     let isDragging = false;
     let startX, startY, initialX, initialY;
 
-    // Desktop drag
     div.addEventListener("mousedown", function (e) {
       isDragging = true;
       startX = e.clientX;
@@ -44,7 +49,10 @@ function renderNotes() {
       initialX = parseInt(div.style.left) || 0;
       initialY = parseInt(div.style.top) || 0;
 
-      div.style.zIndex = 9999;
+      highestZIndex += 1;
+      div.style.zIndex = highestZIndex;
+      notes[i].zIndex = highestZIndex;
+      saveNotes();
 
       function onMouseMove(e) {
         if (!isDragging) return;
@@ -58,7 +66,6 @@ function renderNotes() {
         isDragging = false;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
-        div.style.zIndex = 1;
         notes[i].x = div.style.left;
         notes[i].y = div.style.top;
         saveNotes();
@@ -68,7 +75,6 @@ function renderNotes() {
       document.addEventListener("mouseup", onMouseUp);
     });
 
-    // Mobile drag
     div.addEventListener("touchstart", function (e) {
       isDragging = true;
       const touch = e.touches[0];
@@ -77,7 +83,10 @@ function renderNotes() {
       initialX = parseInt(div.style.left) || 0;
       initialY = parseInt(div.style.top) || 0;
 
-      div.style.zIndex = 9999;
+      highestZIndex += 1;
+      div.style.zIndex = highestZIndex;
+      notes[i].zIndex = highestZIndex;
+      saveNotes();
 
       function onTouchMove(e) {
         if (!isDragging) return;
@@ -92,7 +101,6 @@ function renderNotes() {
         isDragging = false;
         document.removeEventListener("touchmove", onTouchMove);
         document.removeEventListener("touchend", onTouchEnd);
-        div.style.zIndex = 1;
         notes[i].x = div.style.left;
         notes[i].y = div.style.top;
         saveNotes();
@@ -125,13 +133,14 @@ function saveNote() {
   const note = {
     text,
     color,
+    completed: false,
     time: new Date().toLocaleString(),
     x: `${10 + (noteOffset % 200)}px`,
-    y: `${10 + (noteOffset % 300)}px`
+    y: `${10 + (noteOffset % 300)}px`,
+    zIndex: ++highestZIndex
   };
 
   noteOffset += 40;
-
   notes.push(note);
   saveNotes();
   renderNotes();
@@ -154,11 +163,16 @@ function editNote(index) {
   }
 }
 
+function completeNote(index) {
+  notes[index].completed = !notes[index].completed;
+  saveNotes();
+  renderNotes();
+}
+
 addBtn.addEventListener('click', showPopup);
 overlay.addEventListener('click', hidePopup);
 renderNotes();
 
-// Button and heading color animation
 const colors = ["#dff800ff", "#f321e5ff", "#31067aff", "#ff0471ff", "#98ffe2ff"];
 let j = 0;
 

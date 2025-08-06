@@ -105,7 +105,6 @@ function renderNotes() {
       document.addEventListener("touchend", onTouchEnd);
     });
 
-    // When clicked/tapped — bring on top
     div.addEventListener('click', bringToTop);
 
     board.appendChild(div);

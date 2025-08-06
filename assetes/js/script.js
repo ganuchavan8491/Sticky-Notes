@@ -27,9 +27,7 @@ function renderNotes() {
 
     div.innerHTML = `
       <div class="actions">
-        <label>
-            <input type="checkbox" onchange="markComplete(${i})" ${note.complete ? "checked" : ""}> ✔️
-        </label>
+        <input type="checkbox" onclick="markComplete(index)">
         <button onclick="editNote(${i})">✏️</button>
         <button onclick="deleteNote(${i})">🗑</button>
       </div>

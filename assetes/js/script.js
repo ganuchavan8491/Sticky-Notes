@@ -27,7 +27,6 @@ function renderNotes() {
 
     div.innerHTML = `
       <div class="actions">
-        <input type="checkbox" onclick="markComplete(${index}, this)" ${note.complete ? "checked" : ""}>
         <button onclick="editNote(${i})">✏️</button>
         <button onclick="deleteNote(${i})">🗑</button>
       </div>
@@ -159,19 +158,6 @@ function editNote(index) {
     saveNotes();
     renderNotes();
   }
-}
-
-function markComplete(index, checkbox) {
-  if (checkbox.checked) {
-    alert("Marked as done!");
-  } else {
-    alert("Unchecked");
-  }
-  
-  notes[index].complete = checkbox.checked;
-  notes[index].time = new Date().toLocaleString();
-  saveNotes();
-  renderNotes();
 }
 
 addBtn.addEventListener('click', showPopup);

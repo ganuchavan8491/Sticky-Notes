@@ -5,11 +5,13 @@
 }
 
 body {
-  background-image: url("../images/onenote.avif");
+  background-image: url("../images/blackboard.jpg");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Indie Flower", cursive;
+  font-weight: 400;
+  font-style: normal;
   padding: 20px;
   min-height: 100vh;
   position: relative;
@@ -160,9 +162,10 @@ h2 {
 }
 
 #heading{
-  background-color: #33333352;
+  font-weight: bolder;
   padding: 20px;
   align-items: center;
+  font-style: italic;
 }
 
 /* OVERLAY BEHIND POPUP */
